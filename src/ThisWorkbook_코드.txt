@@ -1,0 +1,39 @@
+'============================================================
+'  PERSONAL.XLSB → Microsoft Excel 개체 → ThisWorkbook
+'
+'  ※ 아래 전체를 복사해서 ThisWorkbook 코드창에 붙여넣으세요.
+'    (ThisWorkbook 은 파일 가져오기가 안 됩니다)
+'============================================================
+Option Explicit
+
+Public WithEvents App As Application
+
+Private Sub Workbook_Open()
+    On Error Resume Next
+    이벤트연결
+    단축키등록
+    Err.Clear
+    On Error GoTo 0
+End Sub
+
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    On Error Resume Next
+    단축키해제
+    Set App = Nothing
+    Err.Clear
+    On Error GoTo 0
+End Sub
+
+Private Sub App_WorkbookBeforeClose(ByVal Wb As Workbook, Cancel As Boolean)
+    닫기전_암호확인 Wb, Cancel
+End Sub
+
+'--- 표준 모듈에서 호출하는 보조 프로시저 ---
+Public Sub 이벤트연결()
+    Set App = Nothing
+    Set App = Application
+End Sub
+
+Public Function 이벤트연결됨() As Boolean
+    이벤트연결됨 = Not (App Is Nothing)
+End Function

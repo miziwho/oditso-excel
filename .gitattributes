@@ -1,0 +1,7 @@
+# .bas 파일은 CP949(EUC-KR) 인코딩이다. Git이 텍스트로 오인해
+# 개행/인코딩을 건드리지 않도록 바이너리 취급한다. UTF-8로 변환 금지.
+*.bas -text
+*.txt -text
+*.xlsb binary
+*.xlsm binary
+*.html -text

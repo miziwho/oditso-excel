@@ -1,0 +1,12 @@
+# Excel 임시/잠금 파일
+~$*
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 편집기
+.vscode/
+.idea/
