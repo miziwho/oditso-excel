@@ -160,4 +160,4 @@ oditso-excel/
 ## 링크
 
 - https://oditso.com
-- <!-- BUYMEACOFFEE -->
+- 도움이 되셨다면 ☕ [커피 한 잔](https://www.oditso.com/donate)
