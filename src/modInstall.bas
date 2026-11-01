@@ -13,6 +13,15 @@ Private Function GetDstPath() As String
     GetDstPath = GetDstDir() & "\PERSONAL.XLSB"
 End Function
 
+'--- 백업 폴더 : XLSTART 한 단계 위 ---
+'    XLSTART 에 두면 Excel 이 시작할 때 백업까지 열어버린다.
+Private Function GetBackupDir() As String
+    Dim s As String
+    s = Environ$("APPDATA") & "\Microsoft\Excel\"
+    If Len(Dir(s, vbDirectory)) = 0 Then s = Environ$("APPDATA") & "\"
+    GetBackupDir = s
+End Function
+
 Private Sub EnsureDir(ByVal targetDir As String)
     Dim parentDir As String
     Dim p As Long
@@ -69,6 +78,8 @@ Public Sub PERSONAL_설치()
     Dim dstPath As String
     Dim originalAlerts As Boolean
     Dim startTime As Double
+    Dim bakPath As String
+    Dim bakDir As String
 
     On Error GoTo ErrHandler
 
@@ -102,7 +113,20 @@ Public Sub PERSONAL_설치()
     ' 3. 열려있는 PERSONAL.XLSB 닫기
     ClosePersonalIfOpen
 
-    ' 4. 기존 파일 삭제 (백업 없음)
+    ' 4. 기존 파일이 있으면 먼저 백업한다
+    '    XLSTART 안에 두면 안 된다 - Excel 이 그 폴더의 파일을 전부 자동으로 연다.
+    '    그래서 한 단계 위(%APPDATA%\Microsoft\Excel)에 둔다.
+    If Len(Dir(dstPath)) > 0 Then
+        bakDir = GetBackupDir()
+        bakPath = bakDir & "PERSONAL_백업_" & Format$(Now, "yyyymmdd_hhnnss") & ".XLSB"
+        On Error Resume Next
+        FileCopy dstPath, bakPath
+        Err.Clear
+        On Error GoTo ErrHandler
+        If Len(Dir(bakPath)) = 0 Then bakPath = ""
+    End If
+
+    ' 5. 기존 파일 삭제
     If Len(Dir(dstPath)) > 0 Then
         On Error Resume Next
         SetAttr dstPath, vbNormal
@@ -125,10 +149,10 @@ Public Sub PERSONAL_설치()
         End If
     End If
 
-    ' 5. 복사
+    ' 6. 복사
     FileCopy srcPath, dstPath
 
-    ' 6. 검증
+    ' 7. 검증
     If Len(Dir(dstPath)) = 0 Then
         MsgBox "파일 복사에 실패했습니다.", vbExclamation, "설치 실패"
         Application.DisplayAlerts = originalAlerts
@@ -145,12 +169,15 @@ Public Sub PERSONAL_설치()
         Exit Sub
     End If
 
-    ' 7. 성공 메시지
+    ' 8. 성공 메시지
     Application.DisplayAlerts = originalAlerts
     MsgBox "설치가 완료되었습니다." & vbCrLf & vbCrLf & _
            "Excel 창을 모두 종료한 후 다시 실행해주세요." & vbCrLf & _
            "다음 실행부터 업무용 매크로가 적용됩니다." & vbCrLf & vbCrLf & _
-           "설치 위치: " & dstPath, vbInformation, "설치 완료"
+           "설치 위치: " & dstPath & _
+           IIf(Len(bakPath) > 0, vbCrLf & vbCrLf & _
+               "기존에 쓰시던 PERSONAL.XLSB 가 있어 백업해 두었습니다." & vbCrLf & _
+               bakPath, ""), vbInformation, "설치 완료"
     Exit Sub
 
 ErrHandler:
