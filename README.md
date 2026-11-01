@@ -149,7 +149,6 @@ oditso-excel/
 │   ├─ ThisWorkbook_코드.txt    ThisWorkbook 에 붙여넣는 코드
 │   └─ modInstall.bas           설치파일.xlsm 안의 설치 로직
 ├─ docs/       HTML 사용설명서
-├─ examples/   연습용 예제 파일 (대용량 예제는 릴리스 자산)
 └─ dist/       배포본 (설치파일.xlsm, PERSONAL.XLSB)
 ```
 
