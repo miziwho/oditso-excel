@@ -1,0 +1,74 @@
+================================================================
+  Excel Work Tools  v1.1.0        oditso.com
+  Installation  (about 2 minutes)
+================================================================
+
+WHAT YOU NEED
+  - Microsoft Excel for Windows (2016 or newer)
+  - mod_WorkTools.bas          (the tools themselves)
+  - ThisWorkbook_code.txt      (6 lines that start them up)
+
+
+STEP 1 - open the macro editor
+  Open Excel on a blank workbook.
+  Press  Alt + F11.
+
+
+STEP 2 - bring in the module
+  In the editor, menu  File  >  Import File...
+  Pick  mod_WorkTools.bas  and open it.
+  A module named  mod_WorkTools  appears on the left.
+
+
+STEP 3 - paste the startup code
+  Still in the editor, find  VBAProject (Book1)  on the left,
+  open  Microsoft Excel Objects,  and double-click  ThisWorkbook.
+  Open  ThisWorkbook_code.txt  in Notepad, copy everything below
+  the dashed line, and paste it into that code window.
+
+  (This one cannot be imported - ThisWorkbook only takes a paste.)
+
+
+STEP 4 - save it as your personal macro workbook
+  Press  Ctrl + S.  Excel asks where to save.
+  Choose  Excel Binary Workbook (*.xlsb)  as the file type,
+  name it  PERSONAL,  and save it in this folder:
+
+      %APPDATA%\Microsoft\Excel\XLSTART
+
+  Paste that path straight into the address bar of the save dialog.
+  The file must end up as  PERSONAL.XLSB  in XLSTART - that is the
+  folder Excel opens on its own every time it starts.
+
+
+STEP 5 - restart Excel
+  Close Excel completely and open it again.
+  Press  Ctrl + Shift + K.  A list of the shortcuts appears on the
+  right of the screen. Press it again to remove the list.
+
+  That is it. The tools load by themselves from now on.
+
+
+IF A SHORTCUT DOES NOTHING
+  Another program may have taken that key combination first.
+  Run  Diagnostics  to see what is loaded:
+  Alt + F8  >  WorkTools_Diagnostics  >  Run.
+  To reload the tools without restarting Excel:
+  Alt + F8  >  WorkTools_Restart  >  Run.
+
+
+TO REMOVE IT
+  Delete  PERSONAL.XLSB  from the XLSTART folder above and restart
+  Excel. Nothing else is written anywhere - no registry entries, no
+  other files. Your settings live inside PERSONAL.XLSB itself.
+
+
+WHAT TO TRY FIRST
+  Open  Practice_WorkTools.xlsx.  The first sheet lists which
+  shortcut to try on which sheet.
+
+
+----------------------------------------------------------------
+  Made by SH (from Korea)        https://www.oditso.com
+  Licence : CC BY-NC-ND 4.0  -  free to use, do not resell
+================================================================
