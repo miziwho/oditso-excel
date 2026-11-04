@@ -2,7 +2,7 @@ Attribute VB_Name = "mod업무도구"
 Option Explicit
 
 '============================================================
-'  Excel 업무도구  v1.0.0   (2026-08-25)
+'  Excel 업무도구  v1.1.0   (2026-11-01)
 '  PERSONAL.XLSB 전용 단일 모듈
 '
 '  설치 : VBE에서 [파일 가져오기]로 이 파일 하나만 넣고,
@@ -542,7 +542,7 @@ Fail:
 End Function
 
 '------------------------------------------------------------
-' 암호설정 (Ctrl+Shift+X) - 수동 실행
+' 암호설정 (Ctrl+Shift+P) - 수동 실행
 '------------------------------------------------------------
 Public Sub 암호설정()
     Dim Wb As Workbook
@@ -799,7 +799,7 @@ Fail:
 End Sub
 
 '------------------------------------------------------------
-' 2. 쉼표형식 (Ctrl+Shift+Z)
+' 2. 쉼표형식 (Ctrl+Shift+X)
 '------------------------------------------------------------
 Public Sub 쉼표형식()
     On Error GoTo Fail
@@ -843,7 +843,7 @@ Fail:
 End Sub
 
 '------------------------------------------------------------
-' 3. 클래식피벗 (Ctrl+Shift+A)
+' 3. 클래식피벗 (Ctrl+Shift+T)
 '------------------------------------------------------------
 Public Sub 클래식피벗()
     Dim errNo As Long, errDesc As String
@@ -1156,7 +1156,7 @@ Private Function 파일명정리(ByVal s As String) As String
 End Function
 
 '------------------------------------------------------------
-' 7. 중복행색칠 (Ctrl+Shift+S)
+' 7. 중복행색칠 (Ctrl+Shift+D)
 '------------------------------------------------------------
 Public Sub 중복행색칠()
     Dim rng As Range
@@ -1460,7 +1460,7 @@ Fail:
 End Sub
 
 '------------------------------------------------------------
-' 8. 파일경로복사 (Ctrl+Shift+D)
+' 8. 파일경로복사 (Ctrl+Shift+N)
 '------------------------------------------------------------
 Public Sub 파일경로복사()
     Dim s As String
@@ -2585,7 +2585,7 @@ Fail:
 End Sub
 
 '------------------------------------------------------------
-' 선택한 셀 값으로 필터 (Ctrl+Shift+X)
+' 선택한 셀 값으로 필터 (Ctrl+Shift+Z)
 '   필터가 없으면 현재 영역에 걸고, 커서 셀 값으로 조건을 잡는다.
 '------------------------------------------------------------
 Public Sub 선택값으로필터()
@@ -2594,11 +2594,20 @@ Public Sub 선택값으로필터()
     Dim fr As Range
     Dim 기준 As Range
     Dim c As Range
+    Dim sel As Range
     Dim v As Variant
     Dim crit As String
     Dim fld As Long
     Dim 남은행 As Long
     Dim 걸림 As Boolean
+    Dim 열번호() As Long, 값목록() As Variant
+    Dim 빈칸수() As Long, 값개수() As Long
+    Dim 열수 As Long, i As Long, k As Long
+    Dim 이미걸린수 As Long
+    Dim 요약 As String
+    Dim 최대개수 As Long
+    Dim d As Object
+    Dim 키들 As Variant
     Dim errNo As Long, errDesc As String
 
     If ActiveWorkbook Is Nothing Then Exit Sub
@@ -2610,6 +2619,12 @@ Public Sub 선택값으로필터()
 
     If TypeName(Selection) <> "Range" Then
         MsgBox "필터를 걸 셀을 선택한 뒤 실행해주세요.", vbExclamation, "선택 값으로 필터"
+        Exit Sub
+    End If
+    Set sel = Selection
+    If sel.Cells.CountLarge > 200000 Then
+        MsgBox "선택 범위가 너무 넓습니다." & vbCrLf & _
+               "거를 값이 있는 칸만 골라서 선택해주세요.", vbExclamation, "선택 값으로 필터"
         Exit Sub
     End If
     Set c = ActiveCell
@@ -2655,106 +2670,152 @@ Public Sub 선택값으로필터()
         Set fr = ws.AutoFilter.Range
     End If
 
-    fld = c.Column - fr.Column + 1
-    If fld < 1 Or fld > fr.Columns.Count Then
-        MsgBox "필터 범위 안의 셀을 선택해주세요." & vbCrLf & _
-               "필터 범위: " & fr.Address(False, False), vbExclamation, "선택 값으로 필터"
-        Exit Sub
-    End If
-    If c.Row = fr.Row Then
-        MsgBox "머리글이 아니라 데이터 셀을 선택해주세요.", vbExclamation, "선택 값으로 필터"
-        Exit Sub
-    End If
+    '--- 선택한 칸을 열별로 묶는다 ---
+    '    같은 열에서 여러 개 = OR,  다른 열끼리 = AND
+    '    (자동필터가 원래 그렇게 동작한다. 열마다 따로 걸고 두 번 걸면 AND)
+    ReDim 열번호(1 To fr.Columns.Count)
+    ReDim 값목록(1 To fr.Columns.Count)
+    ReDim 빈칸수(1 To fr.Columns.Count)
+    ReDim 값개수(1 To fr.Columns.Count)
 
-    '--- 이미 이 열에 필터가 걸려 있으면 해제 (토글) ---
-    걸림 = False
-    On Error Resume Next
-    걸림 = ws.AutoFilter.Filters(fld).On
-    Err.Clear
-    On Error GoTo Fail
+    For Each c In sel.Cells
+        fld = c.Column - fr.Column + 1
+        If fld >= 1 And fld <= fr.Columns.Count And c.Row > fr.Row Then
+            If c.Row <= fr.Row + fr.Rows.Count - 1 Then
+                ' 이 열을 처음 보면 자리를 잡는다
+                k = 0
+                For i = 1 To 열수
+                    If 열번호(i) = fld Then k = i: Exit For
+                Next i
+                If k = 0 Then
+                    열수 = 열수 + 1
+                    k = 열수
+                    열번호(k) = fld
+                    Set d = CreateObject("Scripting.Dictionary")
+                    d.CompareMode = 1
+                    Set 값목록(k) = d
+                End If
 
-    If 걸림 Then
-        On Error Resume Next
-        fr.AutoFilter Field:=fld
-        Err.Clear
-        On Error GoTo Fail
-        Application.StatusBar = fr.Cells(1, fld).Value & " 열의 필터를 해제했습니다.  " & _
-                                "|  전체 해제 Ctrl+Shift+A"
-        상태표시줄예약
-        Exit Sub
-    End If
-
-    v = c.Value
-
-    '--- 1차 시도 ---
-    If IsEmpty(v) Or Len(CStr(v)) = 0 Then
-        crit = "(빈 셀)"
-        fr.AutoFilter Field:=fld, Criteria1:="="
-    ElseIf VarType(v) = vbDate Then
-        ' 셀이 진짜 날짜로 저장돼 있을 때만 날짜 범위로 건다.
-        '   IsDate 를 쓰면 안 된다 - "2023-06-13" 같은 글자도 True 라서,
-        '   텍스트로 들어온 날짜 열에 숫자(일련번호) 조건이 걸려 0건이 된다.
-        crit = Format$(v, "yyyy-mm-dd")
-        fr.AutoFilter Field:=fld, _
-                      Criteria1:=">=" & CDbl(v), _
-                      Operator:=xlAnd, _
-                      Criteria2:="<" & (CDbl(v) + 1)
-    ElseIf IsNumeric(v) And VarType(v) <> vbString Then
-        crit = CStr(v)
-        fr.AutoFilter Field:=fld, Criteria1:="=" & CStr(v)
-    Else
-        crit = CStr(v)
-        fr.AutoFilter Field:=fld, Criteria1:="=" & 와일드카드보호(crit)
-    End If
-
-    남은행 = 표시된행수(fr)
-
-    '--- 2차 시도 : 숫자는 표기 방식을 바꿔 다시 ---
-    If 남은행 = 0 And IsNumeric(v) And Not IsEmpty(v) Then
-        On Error Resume Next
-        fr.AutoFilter Field:=fld, Criteria1:=v
-        Err.Clear
-        On Error GoTo Fail
-        남은행 = 표시된행수(fr)
-
-        If 남은행 = 0 Then
-            On Error Resume Next
-            fr.AutoFilter Field:=fld, Criteria1:=c.Text
-            Err.Clear
-            On Error GoTo Fail
-            남은행 = 표시된행수(fr)
+                v = c.Value
+                If IsEmpty(v) Or Len(CStr(v)) = 0 Then
+                    빈칸수(k) = 빈칸수(k) + 1
+                Else
+                    If Not 값목록(k).Exists(c.Text) Then
+                        값목록(k).Add c.Text, 1
+                        값개수(k) = 값개수(k) + 1
+                    End If
+                End If
+            End If
         End If
-    End If
+    Next c
 
-    '--- 3차 시도 : 보이는 값 그대로 목록으로 거른다 ---
-    '    Criteria1 문자열은 Excel 이 날짜로 해석해버릴 수 있다.
-    '    xlFilterValues 는 그 해석을 거치지 않아 텍스트 날짜에도 걸린다.
-    If 남은행 = 0 And Len(c.Text) > 0 Then
-        On Error Resume Next
-        fr.AutoFilter Field:=fld, Criteria1:=Array(c.Text), Operator:=xlFilterValues
-        Err.Clear
-        On Error GoTo Fail
-        남은행 = 표시된행수(fr)
-        If 남은행 > 0 Then crit = c.Text
-    End If
-
-    '--- 그래도 0건이면 이 열의 조건만 풀어 원래대로 ---
-    If 남은행 = 0 Then
-        On Error Resume Next
-        fr.AutoFilter Field:=fld
-        Err.Clear
-        On Error GoTo Fail
-
-        MsgBox "조건에 맞는 행이 없어 이 열의 필터를 해제했습니다." & vbCrLf & vbCrLf & _
-               "머리글: " & fr.Cells(1, fld).Value & vbCrLf & _
-               "조건: " & crit & vbCrLf & _
-               "필터 범위: " & fr.Address(False, False), _
+    If 열수 = 0 Then
+        MsgBox "필터 범위 안의 데이터 칸을 선택해주세요." & vbCrLf & vbCrLf & _
+               "머리글 행과 범위 밖은 제외됩니다." & vbCrLf & _
+               "필터 범위 : " & fr.Address(False, False), _
                vbExclamation, "선택 값으로 필터"
         Exit Sub
     End If
 
-    Application.StatusBar = fr.Cells(1, fld).Value & " = " & crit & "  ->  " & _
-                            Format$(남은행, "#,##0") & "건  |  해제 Ctrl+Shift+A"
+    '--- 고른 열이 전부 이미 걸려 있으면 그 열들을 푼다 (토글) ---
+    이미걸린수 = 0
+    On Error Resume Next
+    For i = 1 To 열수
+        걸림 = False
+        걸림 = ws.AutoFilter.Filters(열번호(i)).On
+        If 걸림 Then 이미걸린수 = 이미걸린수 + 1
+    Next i
+    Err.Clear
+    On Error GoTo Fail
+
+    If 이미걸린수 = 열수 Then
+        On Error Resume Next
+        For i = 1 To 열수
+            fr.AutoFilter Field:=열번호(i)
+            If Len(요약) > 0 Then 요약 = 요약 & " · "
+            요약 = 요약 & fr.Cells(1, 열번호(i)).Value
+        Next i
+        Err.Clear
+        On Error GoTo Fail
+        Application.StatusBar = 요약 & " 열의 필터를 해제했습니다.  |  전체 해제 Ctrl+Shift+A"
+        상태표시줄예약
+        Exit Sub
+    End If
+
+    '--- 개수 확인 ---
+    최대개수 = 0
+    For i = 1 To 열수
+        If 값개수(i) > 최대개수 Then 최대개수 = 값개수(i)
+    Next i
+
+    If 최대개수 > 1000 Then
+        MsgBox "한 열에 거를 값이 " & Format$(최대개수, "#,##0") & "개입니다." & vbCrLf & _
+               "자동필터로는 너무 많습니다." & vbCrLf & vbCrLf & _
+               "고급필터를 쓰세요." & vbCrLf & _
+               "Ctrl+Shift+R 로 조건 열을 만들고 Ctrl+Shift+F.", _
+               vbExclamation, "선택 값으로 필터"
+        Exit Sub
+    End If
+
+    If 최대개수 > 100 Then
+        요약 = ""
+        For i = 1 To 열수
+            If Len(요약) > 0 Then 요약 = 요약 & vbCrLf
+            요약 = 요약 & "   " & fr.Cells(1, 열번호(i)).Value & " : " & _
+                   Format$(값개수(i), "#,##0") & "개"
+        Next i
+        If MsgBox("이만큼을 거릅니다." & vbCrLf & vbCrLf & 요약 & vbCrLf & vbCrLf & _
+                  "진행하시겠습니까?", vbOKCancel + vbQuestion, _
+                  "선택 값으로 필터") <> vbOK Then Exit Sub
+    End If
+
+    '--- 열마다 건다 ---
+    요약 = ""
+    For i = 1 To 열수
+        fld = 열번호(i)
+        If 값개수(i) = 0 Then
+            ' 그 열에서 고른 게 전부 빈 칸
+            fr.AutoFilter Field:=fld, Criteria1:="="
+            crit = "(빈 셀)"
+        Else
+            ' 보이는 값 목록으로 거른다.
+            '   Criteria1 에 글자를 주면 Excel 이 날짜로 해석해버릴 수 있다.
+            '   xlFilterValues 는 그 해석을 거치지 않는다.
+            키들 = 값목록(i).Keys
+            fr.AutoFilter Field:=fld, _
+                          Criteria1:=키들, _
+                          Operator:=xlFilterValues
+            If 값개수(i) = 1 Then
+                crit = CStr(키들(0))
+            Else
+                crit = 값개수(i) & "개"
+            End If
+        End If
+        If Len(요약) > 0 Then 요약 = 요약 & " · "
+        요약 = 요약 & fr.Cells(1, fld).Value & " = " & crit
+        If 값개수(i) > 0 And 빈칸수(i) > 0 Then
+            요약 = 요약 & "(빈 칸 " & 빈칸수(i) & "개 제외)"
+        End If
+    Next i
+
+    남은행 = 표시된행수(fr)
+
+    If 남은행 = 0 Then
+        On Error Resume Next
+        For i = 1 To 열수
+            fr.AutoFilter Field:=열번호(i)
+        Next i
+        Err.Clear
+        On Error GoTo Fail
+        MsgBox "조건에 맞는 행이 없어 필터를 해제했습니다." & vbCrLf & vbCrLf & _
+               요약 & vbCrLf & _
+               "필터 범위 : " & fr.Address(False, False), _
+               vbExclamation, "선택 값으로 필터"
+        Exit Sub
+    End If
+
+    Application.StatusBar = 요약 & "  ->  " & Format$(남은행, "#,##0") & "건" & _
+                            "  |  해제 Ctrl+Shift+A"
     상태표시줄예약
     Exit Sub
 
@@ -7566,7 +7627,7 @@ Public Sub 정렬되돌리기()
 End Sub
 
 '============================================================
-'  위 칸 값으로 빈 칸 채우기 (Ctrl+Alt+A)
+'  위 칸 값으로 빈 칸 채우기 (Ctrl+Shift+4)
 '    병합을 푼 표나 시스템에서 내려온 데이터의 빈 칸을
 '    바로 위 값으로 흘려 넣는다.
 '============================================================
@@ -8538,7 +8599,7 @@ Public Sub 대조B토글60()
 End Sub
 
 '============================================================
-'  자동 채우기 (Ctrl+Alt+A)
+'  자동 채우기 (Ctrl+Alt+Q)
 '    1,2,3 / 월,화,수 / 날짜 같은 패턴을 인식해 표 끝까지 늘린다.
 '    씨앗이 2칸 이상이어야 패턴을 읽는다. (Excel 자동 채우기와 같음)
 '============================================================
@@ -9014,7 +9075,7 @@ Fail:
 End Sub
 
 '============================================================
-'  같은 행끼리 비교 (Ctrl+Alt+F)
+'  같은 행끼리 비교 (Ctrl+Alt+D 팝업에서)
 '    두 열을 행 단위로 맞대어 값이 다른 행만 표시한다.
 '    예) 부서 vs 발령부서  ->  부서를 옮기는 사람만 걸러낸다.
 '============================================================

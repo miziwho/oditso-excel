@@ -1,5 +1,7 @@
 # Excel 업무도구 v1.1
 
+*[English README](README.en.md)*
+
 Excel 2016+ 에서 자주 쓰는 작업 **39가지**를 단축키 하나로 실행하는 매크로 모음입니다.
 파워쿼리 없이 열 피벗 해제, 다중 VLOOKUP, 두 목록 대조 같은 작업을 키 하나로 합니다.
 
@@ -137,8 +139,10 @@ Excel 2016+ 에서 자주 쓰는 작업 **39가지**를 단축키 하나로 실�
 ## 사용설명서
 
 - [`docs/Excel_업무도구_v1.1_사용설명서.html`](docs/Excel_업무도구_v1.1_사용설명서.html)
+- [`docs/Excel_Work_Tools_v1.1_Guide.html`](docs/Excel_Work_Tools_v1.1_Guide.html) — 영문판
 
 설치 · 39개 기능 설명 · 캡처 · 자주 묻는 질문이 한 장에 들어 있습니다.
+영문판은 영어로 먼저 열리고, 사이드바의 **한국어** 단추로 한글판으로 돌아갑니다.
 
 ## 저장소 구조
 
@@ -147,8 +151,13 @@ oditso-excel/
 ├─ src/        VBA 소스 (CP949 인코딩 — UTF-8로 변환 금지)
 │   ├─ mod업무도구.bas          PERSONAL.XLSB 본체
 │   ├─ ThisWorkbook_코드.txt    ThisWorkbook 에 붙여넣는 코드
-│   └─ modInstall.bas           설치파일.xlsm 안의 설치 로직
-├─ docs/       HTML 사용설명서
+│   ├─ modInstall.bas           설치파일.xlsm 안의 설치 로직
+│   └─ en/                      영문판
+│       ├─ mod_WorkTools.bas        본체
+│       ├─ ThisWorkbook_code.txt    ThisWorkbook 에 붙여넣는 코드
+│       ├─ modInstall.bas           설치 로직
+│       └─ INSTALL.txt              영문 설치 안내
+├─ docs/       HTML 사용설명서 (한글판, 영문판)
 └─ dist/       배포본 (설치파일.xlsm, PERSONAL.XLSB)
 ```
 

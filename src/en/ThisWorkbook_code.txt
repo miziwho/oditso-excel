@@ -1,0 +1,39 @@
+'============================================================
+'  PERSONAL.XLSB -> Microsoft Excel Objects -> ThisWorkbook
+'
+'  * Copy everything below and paste it into the ThisWorkbook code window.
+'    (ThisWorkbook cannot be brought in with [Import File])
+'============================================================
+Option Explicit
+
+Public WithEvents App As Application
+
+Private Sub Workbook_Open()
+    On Error Resume Next
+    ConnectEvents
+    RegisterShortcuts
+    Err.Clear
+    On Error GoTo 0
+End Sub
+
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    On Error Resume Next
+    UnregisterShortcuts
+    Set App = Nothing
+    Err.Clear
+    On Error GoTo 0
+End Sub
+
+Private Sub App_WorkbookBeforeClose(ByVal Wb As Workbook, Cancel As Boolean)
+    AskPasswordBeforeClose Wb, Cancel
+End Sub
+
+'--- helpers called from the standard module ---
+Public Sub ConnectEvents()
+    Set App = Nothing
+    Set App = Application
+End Sub
+
+Public Function EventsConnected() As Boolean
+    EventsConnected = Not (App Is Nothing)
+End Function
