@@ -1,0 +1,41 @@
+name: 내려받기 수 기록
+
+# GitHub 은 누적 숫자만 주고 날짜별 내역을 주지 않는다.
+# 그래서 매일 한 번 찍어 두고, 이웃한 두 날의 차이로 그날치를 본다.
+#
+# 00:07 KST (15:07 UTC). 정각은 GitHub 이 붐벼서 밀리는 일이 잦아 비켜 뒀다.
+# 공개 저장소라 Actions 사용 시간은 무료이고, 한 번에 10초 남짓 걸린다.
+on:
+  schedule:
+    - cron: '7 15 * * *'
+  workflow_dispatch:        # 손으로 바로 돌려볼 때
+
+permissions:
+  contents: write
+
+concurrency:
+  group: download-stats
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 숫자 읽어서 기록
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/record_downloads.py
+
+      - name: 바뀌었으면 커밋
+        run: |
+          if git diff --quiet -- stats/downloads.json stats/일별.md; then
+            echo "바뀐 게 없다."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add stats/downloads.json stats/일별.md
+          git commit -m "내려받기 수 기록 $(TZ=Asia/Seoul date +%Y-%m-%d)"
+          git push
