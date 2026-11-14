@@ -9,7 +9,9 @@ import json, os, sys, urllib.request, urllib.error
 from datetime import datetime, timezone, timedelta
 
 KST = timezone(timedelta(hours=9))
-OUT = os.path.join(os.path.dirname(__file__), '..', 'stats', 'downloads.json')
+BASE = os.path.join(os.path.dirname(__file__), '..', 'stats')
+OUT = os.path.join(BASE, 'downloads.json')
+TABLE = os.path.join(BASE, '일별.md')
 
 REPOS = {
     'excel': 'miziwho/oditso-excel',
@@ -50,6 +52,39 @@ def snapshot(repo):
     return {'total': en + ko, 'en': en, 'ko': ko, 'assets': assets}
 
 
+def write_table(days):
+    """사람이 읽을 표. 그날치는 어제와의 차이다."""
+    lines = ['# 날짜별 내려받기', '',
+             '`downloads.json` 을 보기 좋게 옮긴 것이다. 손으로 고치지 말 것 — 매일 다시 쓴다.',
+             '',
+             '**그날치**는 전날과의 차이다. 기록이 빠진 날이 있으면 그 다음 날에 합쳐져 보이고,',
+             '릴리스 자산을 교체한 날은 숫자가 0 으로 돌아가 음수로 보인다.',
+             '']
+    for key, title in (('excel', '엑셀 업무도구'), ('window-switcher', '창전환')):
+        rows = [d for d in days if key in d]
+        if not rows:
+            continue
+        lines += ['## %s' % title, '',
+                  '| 날짜 | 합계 | 그날치 | 영문 | 그날치 | 한글 | 그날치 |',
+                  '| --- | ---: | ---: | ---: | ---: | ---: | ---: |']
+        prev = None
+        for d in rows:
+            c = d[key]
+            def delta(field):
+                if prev is None:
+                    return ''
+                n = c[field] - prev[field]
+                return '+%d' % n if n > 0 else ('%d' % n if n < 0 else '·')
+            lines.append('| %s | %d | %s | %d | %s | %d | %s |' % (
+                d['date'], c['total'], delta('total'),
+                c['en'], delta('en'), c['ko'], delta('ko')))
+            prev = c
+        lines += ['']
+    lines += ['마지막 기록: %s' % (days[-1].get('at', '') if days else '')]
+    with open(TABLE, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines) + '\n')
+
+
 def main():
     today = datetime.now(KST).strftime('%Y-%m-%d')
 
@@ -81,6 +116,7 @@ def main():
     with open(OUT, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write('\n')
+    write_table(data['days'])
     print('%s 기록함. 모두 %d일치.' % (today, len(data['days'])))
     return 0
 

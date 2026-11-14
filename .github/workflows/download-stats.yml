@@ -30,12 +30,12 @@ jobs:
 
       - name: 바뀌었으면 커밋
         run: |
-          if git diff --quiet -- stats/downloads.json; then
+          if git diff --quiet -- stats/downloads.json stats/일별.md; then
             echo "바뀐 게 없다."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add stats/downloads.json
+          git add stats/downloads.json stats/일별.md
           git commit -m "내려받기 수 기록 $(TZ=Asia/Seoul date +%Y-%m-%d)"
           git push
