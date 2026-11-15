@@ -60,7 +60,37 @@
           "v1.0.0/8.Window.Switcher_Alt+Spacebar.exe": 3
         }
       }
+    },
+    {
+      "date": "2026-11-16",
+      "at": "2026-11-15T20:22:05Z",
+      "excel": {
+        "total": 7,
+        "en": 3,
+        "ko": 4,
+        "assets": {
+          "v1.1.0-en/ExcelWorkTools_v1.1.0_EN.zip": 3,
+          "v1.1.0/oditso-excel-v1.1.0.zip": 2,
+          "v1.0.0/default.xlsm": 1,
+          "v1.0.0/PERSONAL.XLSB": 1
+        }
+      },
+      "window-switcher": {
+        "total": 36,
+        "en": 0,
+        "ko": 36,
+        "assets": {
+          "v1.0.0/1.Window.Switcher_Alt+Spacebar.exe": 19,
+          "v1.0.0/2.Window.Switcher_Alt+Spacebar.exe": 2,
+          "v1.0.0/3.Window.Switcher_Alt+Spacebar.exe": 2,
+          "v1.0.0/4.Window.Switcher_Alt+Spacebar.exe": 2,
+          "v1.0.0/5.Window.Switcher_Alt+Spacebar.exe": 3,
+          "v1.0.0/6.Window.Switcher_Alt+Spacebar.exe": 3,
+          "v1.0.0/7.Window.Switcher_Alt+Spacebar.exe": 2,
+          "v1.0.0/8.Window.Switcher_Alt+Spacebar.exe": 3
+        }
+      }
     }
   ],
-  "갱신": "2026-11-14T19:54:02Z"
+  "갱신": "2026-11-15T20:22:05Z"
 }
