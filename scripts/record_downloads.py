@@ -60,13 +60,21 @@ def write_table(days):
              '**그날치**는 전날과의 차이다. 기록이 빠진 날이 있으면 그 다음 날에 합쳐져 보이고,',
              '릴리스 자산을 교체한 날은 숫자가 0 으로 돌아가 음수로 보인다.',
              '']
-    for key, title in (('excel', '엑셀 업무도구'), ('window-switcher', '창전환')):
+    # 엑셀만 릴리스 파일이 한글판·영문판으로 갈라져 있다. 창전환은 앱 하나에
+    # 두 언어가 다 들어 있어 나눌 것이 없다 — 영문 칸은 늘 0, 한글 칸은 합계와
+    # 같은 숫자라 열만 차지한다. 그래서 창전환은 합계만 적는다.
+    for key, title, split in (('excel', '엑셀 업무도구', True),
+                              ('window-switcher', '창전환', False)):
         rows = [d for d in days if key in d]
         if not rows:
             continue
-        lines += ['## %s' % title, '',
-                  '| 날짜 | 합계 | 그날치 | 영문 | 그날치 | 한글 | 그날치 |',
-                  '| --- | ---: | ---: | ---: | ---: | ---: | ---: |']
+        if split:
+            head = '| 날짜 | 합계 | 그날치 | 영문 | 그날치 | 한글 | 그날치 |'
+            rule = '| --- | ---: | ---: | ---: | ---: | ---: | ---: |'
+        else:
+            head = '| 날짜 | 합계 | 그날치 |'
+            rule = '| --- | ---: | ---: |'
+        lines += ['## %s' % title, '', head, rule]
         prev = None
         for d in rows:
             c = d[key]
@@ -75,9 +83,13 @@ def write_table(days):
                     return ''
                 n = c[field] - prev[field]
                 return '+%d' % n if n > 0 else ('%d' % n if n < 0 else '·')
-            lines.append('| %s | %d | %s | %d | %s | %d | %s |' % (
-                d['date'], c['total'], delta('total'),
-                c['en'], delta('en'), c['ko'], delta('ko')))
+            if split:
+                lines.append('| %s | %d | %s | %d | %s | %d | %s |' % (
+                    d['date'], c['total'], delta('total'),
+                    c['en'], delta('en'), c['ko'], delta('ko')))
+            else:
+                lines.append('| %s | %d | %s |' % (
+                    d['date'], c['total'], delta('total')))
             prev = c
         lines += ['']
     lines += ['마지막 기록: %s' % (days[-1].get('at', '') if days else '')]
